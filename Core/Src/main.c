@@ -18,11 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "gpio.h"
 #include "stm32f411xe.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "usart.h"
-#include "gpio.h"
 #include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
@@ -59,31 +59,49 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define DEBOUNCE_DELAY_MS 50
-typedef struct _Button_t{
-  GPIO_TypeDef* port;
+#include <stdbool.h>
+#define DEBOUNCE_DELAY_MS 30
+typedef struct _Button_t {
+  GPIO_TypeDef *port;
   uint16_t pin;
   uint32_t last_debounce_time;
   GPIO_PinState last_raw_state;
   GPIO_PinState stable_state;
-}Button_t;
+} Button_t;
 
-void Button_Init(Button_t btn, GPIO_TypeDef* port, uint16_t pin){
-  
+void Button_Init(Button_t *btn, GPIO_TypeDef *port, uint16_t pin) {
+  btn->port = port;
+  btn->pin = pin;
+  btn->last_debounce_time = 0;
+  btn->last_raw_state = HAL_GPIO_ReadPin(port, pin);
+  btn->stable_state = btn->last_raw_state;
 }
 
-bool Button_IsPressed(Button_t* btn){
+bool Button_IsPressed(Button_t *btn) {
+  GPIO_PinState current_raw = HAL_GPIO_ReadPin(btn->port, btn->pin);
+  uint32_t current_time = HAL_GetTick();
+  if (current_raw != btn->last_raw_state) {
+    btn->last_debounce_time = current_time;
+    btn->last_raw_state = current_raw;
+  }
 
+  if ((current_time - btn->last_debounce_time) >= DEBOUNCE_DELAY_MS) {
+    if (btn->stable_state == GPIO_PIN_RESET)
+      return true;
+    else
+      return false;
+  }
+
+  return false;
 }
 
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
+ * @brief  The application entry point.
+ * @retval int
+ */
+int main(void) {
 
   /* USER CODE BEGIN 1 */
 
@@ -91,8 +109,9 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-    HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
+   */
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -116,19 +135,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1) {
     GPIO_PinState button = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
-    if (button==GPIO_PIN_RESET) {
+    if (button == GPIO_PIN_RESET) {
       HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
     }
 
-    GPIO_PinState button1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-    if (button1==GPIO_PIN_RESET) {
-      HAL_Delay(50);
-      button1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-      if(button1==GPIO_PIN_RESET) {
-      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-      }
+    // GPIO_PinState button1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
+    // if (button1 == GPIO_PIN_RESET) {
+    //   HAL_Delay(50);
+    //   button1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
+    //   if (button1 == GPIO_PIN_RESET) {
+    //     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    //   }
+    Button_t my_button;
+    Button_Init(&my_button, GPIOC, GPIO_PIN_0);
 
-      if(Button_IsPressed(*my_button))
+    if (Button_IsPressed(&my_button)) {
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     }
 
     /* USER CODE END WHILE */
@@ -139,22 +161,21 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
+ * @brief System Clock Configuration
+ * @retval None
+ */
+void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -164,22 +185,20 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLN = 336;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
   RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
     Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
+                                RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
     Error_Handler();
   }
 }
@@ -189,11 +208,10 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
+void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
@@ -203,14 +221,13 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
      number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
