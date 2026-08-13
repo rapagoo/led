@@ -57,42 +57,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#include <stdbool.h>
-#define DEBOUNCE_DELAY_MS 30
-typedef struct _Button_t {
-  GPIO_TypeDef *port;
-  uint16_t pin;
-  uint32_t last_debounce_time;
-  GPIO_PinState last_raw_state;
-  GPIO_PinState stable_state;
-} Button_t;
-
-void Button_Init(Button_t *btn, GPIO_TypeDef *port, uint16_t pin) {
-  btn->port = port;
-  btn->pin = pin;
-  btn->last_debounce_time = 0;
-  btn->last_raw_state = HAL_GPIO_ReadPin(port, pin);
-  btn->stable_state = btn->last_raw_state;
-}
-
-bool Button_IsPressed(Button_t *btn) {
-  GPIO_PinState current_raw = HAL_GPIO_ReadPin(btn->port, btn->pin);
-  uint32_t current_time = HAL_GetTick();
-  if (current_raw != btn->last_raw_state) {
-    btn->last_debounce_time = current_time;
-    btn->last_raw_state = current_raw;
-  }
-
-  if ((current_time - btn->last_debounce_time) >= DEBOUNCE_DELAY_MS) {
-    if (btn->stable_state == GPIO_PIN_RESET)
-      return true;
-    else
-      return false;
-  }
-
-  return false;
-}
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
   if(GPIO_Pin==GPIO_PIN_13){
     HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
@@ -142,24 +106,6 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-    // GPIO_PinState button = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
-    // if (button == GPIO_PIN_RESET) {
-    //   HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    // }
-
-    // GPIO_PinState button1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-    // if (button1 == GPIO_PIN_RESET) {
-    //   HAL_Delay(50);
-    //   button1 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0);
-    //   if (button1 == GPIO_PIN_RESET) {
-    //     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-    //   }
-    // Button_t my_button;
-    // Button_Init(&my_button, GPIOC, GPIO_PIN_0);
-
-    // if (Button_IsPressed(&my_button)) {
-    //   HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-    // }
 
     /* USER CODE END WHILE */
 
