@@ -154,8 +154,8 @@ int main(void)
     //   if (button1 == GPIO_PIN_RESET) {
     //     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
     //   }
-    Button_t my_button;
-    Button_Init(&my_button, GPIOC, GPIO_PIN_0);
+    // Button_t my_button;
+    // Button_Init(&my_button, GPIOC, GPIO_PIN_0);
 
     // if (Button_IsPressed(&my_button)) {
     //   HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
