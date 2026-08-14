@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
-#include "stm32f4xx_hal_uart.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -38,7 +37,7 @@ PUTCHAR_PROTOTYPE {
   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
   return ch;
 }
-#define RX_BUF_SIZE 2
+#define RX_BUF_SIZE 1
 uint8_t rx_data;
 uint8_t rx_buf[RX_BUF_SIZE];
 /* USER CODE END Includes */
@@ -80,6 +79,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
+  if(huart->Instance == USART1){
+    
+  }
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART2) {
     if (rx_data == 'a')
@@ -88,6 +93,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
       HAL_UART_Transmit(&huart2, rx_buf, RX_BUF_SIZE, 100);
 
     HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
+  }
+    if (huart->Instance == USART1) {
+    if (rx_data == 'a')
+      printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
+    else
+      HAL_UART_Transmit(&huart1, rx_buf, RX_BUF_SIZE, 100);
+
+    HAL_UART_Receive_DMA(&huart1, rx_buf, RX_BUF_SIZE);
   }
 }
 
@@ -141,7 +154,9 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buf, RX_BUF_SIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rx_buf, RX_BUF_SIZE);
 
   /* USER CODE END 2 */
