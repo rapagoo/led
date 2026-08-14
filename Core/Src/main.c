@@ -114,10 +114,12 @@ static void ProcessKeyboardInput(uint8_t key) {
   if (key == '\r' || key == '\n') {
     if (line_len > 0) {
       HAL_UART_Transmit(&huart1, line_buf, line_len, 100);
+      HAL_UART_Transmit(&huart1, (uint8_t *)newline, 2, 100);
+      HAL_UART_Transmit(&huart2, (uint8_t *)newline, 2, 100);
+      memset(line_buf, 0, sizeof(line_buf));
+      line_len = 0;
     }
-    HAL_UART_Transmit(&huart1, (uint8_t *)newline, 2, 100);
-    HAL_UART_Transmit(&huart2, (uint8_t *)newline, 2, 100);
-    line_len = 0;
+
   }
   // Backspace: 버퍼와 내 화면에서 마지막 문자 삭제
   else if ((key == '\b') || (key == 0x7F)) {
