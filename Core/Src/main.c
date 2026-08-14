@@ -36,8 +36,9 @@ PUTCHAR_PROTOTYPE {
   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
   return ch;
 }
-
+#define RX_BUF_SIZE 2
 uint8_t rx_data;
+uint8_t rx_buf[RX_BUF_SIZE];
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -82,9 +83,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (rx_data == 'a')
       printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
     else
-      HAL_UART_Transmit(&huart2, &rx_data, 1, 10);
+      HAL_UART_Transmit(&huart2, rx_buf, RX_BUF_SIZE, 100);
 
-    HAL_UART_Receive_IT(&huart2, &rx_data, 1);
+    HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
   }
 }
 
@@ -122,7 +123,8 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, &rx_data, 1);
+  // HAL_UART_Receive_IT(&huart2, &rx_data, 1);
+  HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
 
   /* USER CODE END 2 */
 
