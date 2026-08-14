@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef __GNUC__
@@ -37,7 +38,9 @@ PUTCHAR_PROTOTYPE {
   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
   return ch;
 }
-#define RX_BUF_SIZE 1
+#define RX_BUF_SIZE 64
+uint8_t usart1_rx_buf[RX_BUF_SIZE];
+uint8_t usart2_rx_buf[RX_BUF_SIZE];
 uint8_t rx_data;
 uint8_t rx_buf[RX_BUF_SIZE];
 /* USER CODE END Includes */
@@ -79,46 +82,59 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-  if(huart->Instance == USART1){
-    
+// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+//   if (huart->Instance == USART2) {
+//     if (rx_data == 'a')
+//       printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
+//     else
+//       HAL_UART_Transmit(&huart2, rx_buf, RX_BUF_SIZE, 100);
+
+//     HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
+//   }
+//     else if (huart->Instance == USART1) {
+//     if (rx_data == 'a')
+//       printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
+//     else
+//       HAL_UART_Transmit(&huart1, rx_buf, RX_BUF_SIZE, 100);
+
+//     HAL_UART_Receive_DMA(&huart1, rx_buf, RX_BUF_SIZE);
+//   }
+// }
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+  if (huart->Instance == USART1) {
+    // TX to USART2
+    HAL_UART_Transmit(&huart2, usart1_rx_buf, Size, 100);
+    // SET USART1 back to reception
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, usart1_rx_buf, RX_BUF_SIZE);
+  } else if (huart->Instance == USART2) {
+    // TX to USART1
+    HAL_UART_Transmit(&huart1, usart2_rx_buf, Size, 100);
+    // SET USART2 back to reception
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, usart2_rx_buf, RX_BUF_SIZE);
   }
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART2) {
-    if (rx_data == 'a')
-      printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
-    else
-      HAL_UART_Transmit(&huart2, rx_buf, RX_BUF_SIZE, 100);
+// void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
+//   if (huart->Instance == USART2) {
+//     if (rx_data == 'a')
+//       printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
+//     else
+//       HAL_UART_Transmit(&huart2, rx_buf, Size, 100);
+//     HAL_UART_DMAStop(&huart2);
+//     memset(rx_buf,0,Size);
+//   }
+//   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rx_buf, RX_BUF_SIZE);
+// }
 
-    HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
-  }
-    if (huart->Instance == USART1) {
-    if (rx_data == 'a')
-      printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
-    else
-      HAL_UART_Transmit(&huart1, rx_buf, RX_BUF_SIZE, 100);
-
-    HAL_UART_Receive_DMA(&huart1, rx_buf, RX_BUF_SIZE);
-  }
-}
-
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
-  if (huart->Instance == USART2) {
-    if (rx_data == 'a')
-      printf("Hello STM32 Cortex-M4 USART Polling!\r\n");
-    else
-      HAL_UART_Transmit(&huart2, rx_buf, Size, 100);
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+    HAL_UART_DMAStop(&huart1);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1, usart1_rx_buf, RX_BUF_SIZE);
+  } else if (huart->Instance == USART2) {
     HAL_UART_DMAStop(&huart2);
-    memset(rx_buf,0,Size);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, usart2_rx_buf, RX_BUF_SIZE);
   }
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rx_buf, RX_BUF_SIZE);
-}
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-{
-  HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
 }
 
 /* USER CODE END 0 */
@@ -156,15 +172,15 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rx_buf, RX_BUF_SIZE);
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rx_buf, RX_BUF_SIZE);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, usart2_rx_buf, RX_BUF_SIZE);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart1, usart1_rx_buf, RX_BUF_SIZE);
+  //HAL_UART_Receive_DMA(&huart2, rx_buf, RX_BUF_SIZE);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
