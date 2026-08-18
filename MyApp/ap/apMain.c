@@ -10,17 +10,18 @@
 #include <stdio.h>
 #include <string.h>
 
-uint32_t adc_multi_values[3] = {0, 0, 0};
-
 extern ADC_HandleTypeDef hadc1;
 void apInit(void) {
   uartInit();
-  HAL_ADC_Start_DMA(&hadc1, adc_multi_values, 3);
+  adcInit();
 }
+
+float internal_temp = 0;
 
 void apMain(void) {
   while (1) {
-
+    adcUpdate();
+    internal_temp = adcGetTemp();
     HAL_Delay(10);
   }
 }
