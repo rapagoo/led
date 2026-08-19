@@ -9,3 +9,4 @@ uint32_t Adc_Ch4(void);
 
 void adcUpdate(void);
 float adcGetTemp(void);
+uint32_t adcGetReed(void);

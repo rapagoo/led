@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-uint32_t adc_multi_values[4] = {0, 0, 0, 0};
+uint32_t adc_multi_values[5] = {0, 0, 0, 0, 0};
 
 /* STM32F411 팩토리 캘리브레이션 값 주소 (3.3V 기준 공장 측정치) */
 #define TS_CAL1_ADDR ((uint16_t *)0x1FFF7A2C) /* 30°C 측정값 */
@@ -41,7 +41,7 @@ void adcInit(void) {
   sample_interval_ms = 500;
   is_running = true;
 
-  HAL_ADC_Start_DMA(&hadc1, adc_multi_values, 4);
+  HAL_ADC_Start_DMA(&hadc1, adc_multi_values, 5);
 }
 
 ADC_ChannelConfTypeDef sConfig = {0};
@@ -124,3 +124,4 @@ void adcUpdate(void) {
 }
 
 float adcGetTemp(void) { return calculated_temp; }
+uint32_t adcGetReed(void) { return adc_multi_values[4]; }
