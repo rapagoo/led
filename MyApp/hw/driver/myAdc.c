@@ -88,7 +88,7 @@ uint32_t Adc_Ch4(void) {
   return temp_Adc;
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) { 
   if (hadc->Instance == ADC1) {
     is_conv_done = true;
     adc_raw_val = adc_multi_values[3];
