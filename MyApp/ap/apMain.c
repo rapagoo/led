@@ -37,6 +37,12 @@ void apMain(void) {
     adcUpdate();
     dht_status = dht11Read(&dht_data);
     internal_temp = adcGetTemp();
+    if (dht_status) {
+      lcd1602Cursor(0, 0);
+      lcd1602Printf("Temp:%5.1f C", dht_data.temperature);
+      lcd1602Cursor(1, 0);
+      lcd1602Printf("Humi:%5.1f %%", dht_data.humidity);  
+    }
     HAL_Delay(10);
   }
 }
