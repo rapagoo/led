@@ -1,5 +1,4 @@
 #include "myUart.h"
-#include <stdio.h>
 #include <string.h>
 
 #ifdef __GNUC__
