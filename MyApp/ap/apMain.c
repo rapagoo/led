@@ -4,6 +4,7 @@
 #include "myDht11.h"
 #include "myI2c.h"
 #include "myLcd1602.h"
+#include "myMpu6050.h"
 #include "myUart.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_adc.h"
@@ -13,6 +14,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static mpu6050Data_t mpu_data = {0};
+
 extern ADC_HandleTypeDef hadc1;
 void apInit(void) {
   uartInit();
@@ -20,6 +23,7 @@ void apInit(void) {
   dht11Init();
   lcd1602Init();
   i2cScan();
+  mpu6050Init();
 }
 
 float internal_temp = 0;
@@ -27,16 +31,45 @@ dht11Data_t dht_data = {0};
 bool dht_status = false;
 
 void apMain(void) {
-  lcd1602Clear();
-  lcd1602Cursor(0, 0);
-  lcd1602Print("Hello LCD");
-  lcd1602Cursor(1, 5);
-  lcd1602Print("World!");
+  uint32_t tick_1000 = 0;
+  uint32_t tick_250 = 0;
+  uint32_t tick_100 = 0;
+  uint32_t tick_50 = 0;
+  uint32_t current_tick = 0;
 
   while (1) {
-    adcUpdate();
-    dht_status = dht11Read(&dht_data);
-    internal_temp = adcGetTemp();
+    current_tick = HAL_GetTick();
+
+    if (current_tick - tick_1000 >= 1000) {
+      tick_1000 = current_tick;
+    }
+
+    if (current_tick - tick_250 >= 250) {
+      tick_250 = current_tick;
+      adcUpdate();
+      dht_status = dht11Read(&dht_data);
+      internal_temp = adcGetTemp();
+
+      lcd1602Clear();
+      lcd1602Cursor(0, 0);
+      lcd1602Printf("Temp %.2f/%.2f", internal_temp, dht_data.temperature);
+      lcd1602Cursor(1, 0);
+      lcd1602Printf("Humi %.2f", dht_data.humidity);
+    }
+
+    if (current_tick - tick_100 >= 100) {
+      tick_100 = current_tick;
+      if (mpu6050Read(&mpu_data)) {
+        printf(">acc_x:%.3f\r\n>acc_y:%.3f\r\n>acc_z:%.3f\r\n>gyro_x:"
+               "%.3f\r\n>gyro_y: %.3f\r\n>gyro_z: %.3f\r\n",
+               mpu_data.accel_x, mpu_data.accel_y, mpu_data.accel_z,
+               mpu_data.gyro_x, mpu_data.gyro_y, mpu_data.gyro_z);
+      }
+    }
+
+    if (current_tick - tick_50 >= 50) {
+    }
+
     HAL_Delay(10);
   }
 }
