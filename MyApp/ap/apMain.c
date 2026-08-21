@@ -72,6 +72,28 @@ void apMain(void) {
                "%.3f\r\n>gyro_y: %.3f\r\n>gyro_z: %.3f\r\n",
                mpu_data.accel_x, mpu_data.accel_y, mpu_data.accel_z,
                mpu_data.gyro_x, mpu_data.gyro_y, mpu_data.gyro_z);
+
+        char str[32];
+        ssd1306FillRect(2, 15, 124, 47, SSD1306_COLOR_BLACK);
+        ssd1306DrawChar(4, 16, '~'+1, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(10, 16, '~'+2, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(16, 16, '~'+3, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(22, 16, '~'+4, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(28, 16, '~'+5, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(34, 16, '~'+6, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(40, 16, '~'+7, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(46, 16, '~'+8, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(52, 16, '~'+9, SSD1306_COLOR_WHITE);
+        ssd1306DrawChar(58, 16, '~'+10, SSD1306_COLOR_WHITE);
+        snprintf(str, sizeof(str), "GyroX: %5.2f", mpu_data.gyro_x);
+        ssd1306DrawString(5, 25, str, SSD1306_COLOR_WHITE);
+        snprintf(str, sizeof(str), "GyroY: %5.2f", mpu_data.gyro_y);
+        ssd1306DrawString(5, 35, str, SSD1306_COLOR_WHITE);
+        snprintf(str, sizeof(str), "GyroZ: %5.2f", mpu_data.gyro_z);
+        ssd1306DrawString(5, 45, str, SSD1306_COLOR_WHITE);
+
+
+        ssd1306Update();
       }
     }
 
