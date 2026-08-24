@@ -65,8 +65,8 @@ void apMain(void) {
     if (current_tick - tick_1000 >= 1000) {
       tick_1000 = current_tick;
 
-      ds1302GetDateTime(&rtc_time);
-      printf("sec: %02d\r\n", rtc_time.sec);
+      // ds1302GetDateTime(&rtc_time);
+      // printf("sec: %02d\r\n", rtc_time.sec);
 
       /* RTC 레지스터 구조상 Time을 먼저 읽고 Date를 다음에 읽어야 락(Lock)이
        * 풀리며 동기화됨 */
@@ -85,13 +85,13 @@ void apMain(void) {
       dht_status = dht11Read(&dht_data);
       internal_temp = adcGetTemp();
 
-      float distance_cm;
+      // float distance_cm;
 
-      if (hcSr04Read(&distance_cm)) {
-        printf("Distance: %.2f cm\r\n", distance_cm);
-      } else {
-        printf("HC-SR04 read failed\r\n");
-      }
+      // if (hcSr04Read(&distance_cm)) {
+      //   printf("Distance: %.2f cm\r\n", distance_cm);
+      // } else {
+      //   printf("HC-SR04 read failed\r\n");
+      // }
 
       // lcd1602Clear();
       // lcd1602Cursor(0, 0);
