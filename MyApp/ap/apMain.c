@@ -55,6 +55,7 @@ void apMain(void) {
   ssd1306DrawLine(4, 13, 124, 13, SSD1306_COLOR_WHITE);
   ssd1306Update();
   HAL_TIM_Base_Start_IT(&htim2);
+  
 
   RTC_TimeTypeDef sTime;
   RTC_DateTypeDef sDate;
