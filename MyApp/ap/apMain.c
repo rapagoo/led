@@ -9,11 +9,14 @@
 #include "myMpu6050.h"
 #include "mySsd1306.h"
 #include "myUart.h"
+#include "rtc.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_def.h"
+#include "stm32f4xx_hal_rtc.h"
 #include "stm32f4xx_hal_tim.h"
 #include "tim.h"
+
 
 #include <stdint.h>
 #include <stdio.h>
@@ -53,6 +56,9 @@ void apMain(void) {
   ssd1306Update();
   HAL_TIM_Base_Start_IT(&htim2);
 
+  RTC_TimeTypeDef sTime;
+  RTC_DateTypeDef sDate;
+
   while (1) {
     current_tick = HAL_GetTick();
 
@@ -61,6 +67,16 @@ void apMain(void) {
 
       ds1302GetDateTime(&rtc_time);
       printf("sec: %02d\r\n", rtc_time.sec);
+
+      /* RTC 레지스터 구조상 Time을 먼저 읽고 Date를 다음에 읽어야 락(Lock)이
+       * 풀리며 동기화됨 */
+      HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+      HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+      /* 시리얼 터미널로 실시간 날짜와 시간 출력 */
+      printf("Date: 20%02d-%02d-%02d ", sDate.Year, sDate.Month, sDate.Date);
+      printf("Time: %02d:%02d:%02d\r\n", sTime.Hours, sTime.Minutes,
+             sTime.Seconds);
     }
 
     if (current_tick - tick_250 >= 250) {
