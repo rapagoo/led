@@ -2,6 +2,7 @@
 #include "adc.h"
 #include "myAdc.h"
 #include "myDht11.h"
+#include "myDs1302.h"
 #include "myI2c.h"
 #include "myLcd1602.h"
 #include "myMpu6050.h"
@@ -15,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
+static ds1302Time_t rtc_time = {0};
 static mpu6050Data_t mpu_data = {0};
 
 extern ADC_HandleTypeDef hadc1;
@@ -26,6 +28,7 @@ void apInit(void) {
   i2cScan();
   mpu6050Init();
   ssd1306Init();
+  ds1302Init();
 }
 
 float internal_temp = 0;
@@ -44,12 +47,16 @@ void apMain(void) {
   ssd1306DrawString(8, 3, "STM32 MULTI-SENSOR", SSD1306_COLOR_WHITE);
   ssd1306DrawLine(4, 13, 124, 13, SSD1306_COLOR_WHITE);
   ssd1306Update();
+  
 
   while (1) {
     current_tick = HAL_GetTick();
 
     if (current_tick - tick_1000 >= 1000) {
       tick_1000 = current_tick;
+
+      ds1302GetDateTime(&rtc_time);
+      printf("sec: %02d", rtc_time.sec);
     }
 
     if (current_tick - tick_250 >= 250) {
@@ -58,11 +65,11 @@ void apMain(void) {
       dht_status = dht11Read(&dht_data);
       internal_temp = adcGetTemp();
 
-      lcd1602Clear();
-      lcd1602Cursor(0, 0);
-      lcd1602Printf("Temp %.2f/%.2f", internal_temp, dht_data.temperature);
-      lcd1602Cursor(1, 0);
-      lcd1602Printf("Humi %.2f", dht_data.humidity);
+      // lcd1602Clear();
+      // lcd1602Cursor(0, 0);
+      // lcd1602Printf("Temp %.2f/%.2f", internal_temp, dht_data.temperature);
+      // lcd1602Cursor(1, 0);
+      // lcd1602Printf("Humi %.2f", dht_data.humidity);
     }
 
     if (current_tick - tick_100 >= 100) {
