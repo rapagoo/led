@@ -12,6 +12,8 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_def.h"
+#include "stm32f4xx_hal_tim.h"
+#include "tim.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -49,6 +51,7 @@ void apMain(void) {
   ssd1306DrawString(8, 3, "STM32 MULTI-SENSOR", SSD1306_COLOR_WHITE);
   ssd1306DrawLine(4, 13, 124, 13, SSD1306_COLOR_WHITE);
   ssd1306Update();
+  HAL_TIM_Base_Start_IT(&htim2);
 
   while (1) {
     current_tick = HAL_GetTick();
