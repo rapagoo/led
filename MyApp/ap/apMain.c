@@ -11,7 +11,7 @@
 #include "myTimer.h"
 #include "myUart.h"
 #include "rtc.h"
-#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal.h"+
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_rtc.h"
@@ -63,9 +63,11 @@ void apMain(void) {
   RTC_TimeTypeDef sTime;
   RTC_DateTypeDef sDate;
 
+  
   while (1) {
     current_tick = HAL_GetTick();
-
+    timerLedBreath();
+    
     if (current_tick - tick_1000 >= 1000) {
       tick_1000 = current_tick;
 
