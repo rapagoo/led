@@ -8,6 +8,7 @@
 #include "myLcd1602.h"
 #include "myMpu6050.h"
 #include "mySsd1306.h"
+#include "myTimer.h"
 #include "myUart.h"
 #include "rtc.h"
 #include "stm32f4xx_hal.h"
@@ -36,6 +37,7 @@ void apInit(void) {
   mpu6050Init();
   ssd1306Init();
   ds1302Init();
+  timerInit();
 }
 
 float internal_temp = 0;
@@ -54,7 +56,8 @@ void apMain(void) {
   ssd1306DrawString(8, 3, "STM32 MULTI-SENSOR", SSD1306_COLOR_WHITE);
   ssd1306DrawLine(4, 13, 124, 13, SSD1306_COLOR_WHITE);
   ssd1306Update();
-  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim4);
   
 
   RTC_TimeTypeDef sTime;
