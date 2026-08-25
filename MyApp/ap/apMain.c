@@ -11,13 +11,12 @@
 #include "myTimer.h"
 #include "myUart.h"
 #include "rtc.h"
-#include "stm32f4xx_hal.h"+
+#include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_rtc.h"
 #include "stm32f4xx_hal_tim.h"
 #include "tim.h"
-
 
 #include <stdint.h>
 #include <stdio.h>
@@ -31,13 +30,16 @@ void apInit(void) {
   uartInit();
   hcSr04Init();
   adcInit();
-  dht11Init();
   lcd1602Init();
   i2cScan();
   mpu6050Init();
   ssd1306Init();
   ds1302Init();
+  dht11Init();
   timerInit();
+  
+  bool lcd_status = lcd1602Init();
+  printf("LCD init: %s\r\n", lcd_status ? "OK" : "FAIL");
 }
 
 float internal_temp = 0;
@@ -58,21 +60,20 @@ void apMain(void) {
   ssd1306Update();
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim4);
-  
 
   RTC_TimeTypeDef sTime;
   RTC_DateTypeDef sDate;
 
-  
   while (1) {
     current_tick = HAL_GetTick();
     timerLedUpdate();
-    
+
     if (current_tick - tick_1000 >= 1000) {
       tick_1000 = current_tick;
+      dht_status = dht11Read(&dht_data);
 
-      // ds1302GetDateTime(&rtc_time);
-      // printf("sec: %02d\r\n", rtc_time.sec);
+      ds1302GetDateTime(&rtc_time);
+      printf("sec: %02d\r\n", rtc_time.sec);
 
       /* RTC 레지스터 구조상 Time을 먼저 읽고 Date를 다음에 읽어야 락(Lock)이
        * 풀리며 동기화됨 */
@@ -80,15 +81,11 @@ void apMain(void) {
       HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 
       /* 시리얼 터미널로 실시간 날짜와 시간 출력 */
-      printf("Date: 20%02d-%02d-%02d ", sDate.Year, sDate.Month, sDate.Date);
-      printf("Time: %02d:%02d:%02d\r\n", sTime.Hours, sTime.Minutes,
-             sTime.Seconds);
     }
 
     if (current_tick - tick_250 >= 250) {
       tick_250 = current_tick;
       adcUpdate();
-      dht_status = dht11Read(&dht_data);
       internal_temp = adcGetTemp();
 
       // float distance_cm;
@@ -99,11 +96,11 @@ void apMain(void) {
       //   printf("HC-SR04 read failed\r\n");
       // }
 
-      // lcd1602Clear();
-      // lcd1602Cursor(0, 0);
-      // lcd1602Printf("Temp %.2f/%.2f", internal_temp, dht_data.temperature);
-      // lcd1602Cursor(1, 0);
-      // lcd1602Printf("Humi %.2f", dht_data.humidity);
+      lcd1602Clear();
+      lcd1602Cursor(0, 0);
+      lcd1602Printf("Temp %.2f/%.2f", internal_temp, dht_data.temperature);
+      lcd1602Cursor(1, 0);
+      lcd1602Printf("Humi %.2f", dht_data.humidity);
     }
 
     if (current_tick - tick_100 >= 100) {
