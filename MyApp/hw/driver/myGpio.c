@@ -8,9 +8,3 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
   }
 }
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  if (htim->Instance == TIM2) {
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5); // 1초마다 LED 반전
-  }
-}

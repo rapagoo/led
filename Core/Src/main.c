@@ -105,8 +105,6 @@ int main(void)
   MX_RTC_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  apInit();
-  apMain();
 
   /* USER CODE END 2 */
 

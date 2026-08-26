@@ -52,7 +52,7 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityHigh2,
 };
 /* Definitions for myTask_LED */
 osThreadId_t myTask_LEDHandle;
@@ -65,8 +65,36 @@ const osThreadAttr_t myTask_LED_attributes = {
 osThreadId_t myTaskCLIHandle;
 const osThreadAttr_t myTaskCLI_attributes = {
   .name = "myTaskCLI",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for myTaskHCS04 */
+osThreadId_t myTaskHCS04Handle;
+const osThreadAttr_t myTaskHCS04_attributes = {
+  .name = "myTaskHCS04",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for myTaskDHT11 */
+osThreadId_t myTaskDHT11Handle;
+const osThreadAttr_t myTaskDHT11_attributes = {
+  .name = "myTaskDHT11",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for myTask01 */
+osThreadId_t myTask01Handle;
+const osThreadAttr_t myTask01_attributes = {
+  .name = "myTask01",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh1,
+};
+/* Definitions for myTask02 */
+osThreadId_t myTask02Handle;
+const osThreadAttr_t myTask02_attributes = {
+  .name = "myTask02",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,6 +105,10 @@ const osThreadAttr_t myTaskCLI_attributes = {
 void StartDefaultTask(void *argument);
 void StartTaskLED(void *argument);
 void StartTaskCLI(void *argument);
+void StartTaskHCS04(void *argument);
+void StartTaskDHT11(void *argument);
+void StartTask01(void *argument);
+void StartTask02(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -116,6 +148,18 @@ void MX_FREERTOS_Init(void) {
   /* creation of myTaskCLI */
   myTaskCLIHandle = osThreadNew(StartTaskCLI, NULL, &myTaskCLI_attributes);
 
+  /* creation of myTaskHCS04 */
+  myTaskHCS04Handle = osThreadNew(StartTaskHCS04, NULL, &myTaskHCS04_attributes);
+
+  /* creation of myTaskDHT11 */
+  myTaskDHT11Handle = osThreadNew(StartTaskDHT11, NULL, &myTaskDHT11_attributes);
+
+  /* creation of myTask01 */
+  myTask01Handle = osThreadNew(StartTask01, NULL, &myTask01_attributes);
+
+  /* creation of myTask02 */
+  myTask02Handle = osThreadNew(StartTask02, NULL, &myTask02_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -133,7 +177,7 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+__weak void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
@@ -178,6 +222,78 @@ __weak void StartTaskCLI(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartTaskCLI */
+}
+
+/* USER CODE BEGIN Header_StartTaskHCS04 */
+/**
+* @brief Function implementing the myTaskHCS04 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskHCS04 */
+__weak void StartTaskHCS04(void *argument)
+{
+  /* USER CODE BEGIN StartTaskHCS04 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTaskHCS04 */
+}
+
+/* USER CODE BEGIN Header_StartTaskDHT11 */
+/**
+* @brief Function implementing the myTaskDHT11 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTaskDHT11 */
+__weak void StartTaskDHT11(void *argument)
+{
+  /* USER CODE BEGIN StartTaskDHT11 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTaskDHT11 */
+}
+
+/* USER CODE BEGIN Header_StartTask01 */
+/**
+* @brief Function implementing the myTask01 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask01 */
+__weak void StartTask01(void *argument)
+{
+  /* USER CODE BEGIN StartTask01 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask01 */
+}
+
+/* USER CODE BEGIN Header_StartTask02 */
+/**
+* @brief Function implementing the myTask02 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask02 */
+__weak void StartTask02(void *argument)
+{
+  /* USER CODE BEGIN StartTask02 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask02 */
 }
 
 /* Private application code --------------------------------------------------*/

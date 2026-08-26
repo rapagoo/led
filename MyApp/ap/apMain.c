@@ -1,5 +1,8 @@
 #include "apMain.h"
 #include "adc.h"
+#include "cmsis_os2.h"
+#include "freeRTOS.h"
+#include "main.h"
 #include "myAdc.h"
 #include "myDht11.h"
 #include "myDs1302.h"
@@ -11,9 +14,11 @@
 #include "myTimer.h"
 #include "myUart.h"
 #include "rtc.h"
+#include "stm32f411xe.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_adc.h"
 #include "stm32f4xx_hal_def.h"
+#include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_rtc.h"
 #include "stm32f4xx_hal_tim.h"
 #include "tim.h"
@@ -21,6 +26,19 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#define TARGET_COUNT 1000000
+#define HALF_COUNT (TARGET_COUNT / 2)
+
+/* 공유 전역 변수 */
+volatile uint32_t g_shared_counter = 0;
+volatile uint8_t task1_done = 0;
+volatile uint8_t task2_done = 0;
+
+osMutexId_t counterMutexHandle;
+const osMutexAttr_t counterMutex_attributes = {
+  .name = "counterMutex"
+};
 
 static ds1302Time_t rtc_time = {0};
 static mpu6050Data_t mpu_data = {0};
@@ -37,10 +55,12 @@ void apInit(void) {
   ds1302Init();
   dht11Init();
   timerInit();
-  
+
   bool lcd_status = lcd1602Init();
   printf("LCD init: %s\r\n", lcd_status ? "OK" : "FAIL");
 }
+
+float distance_cm = 0.0f;
 
 float internal_temp = 0;
 dht11Data_t dht_data = {0};
@@ -70,7 +90,6 @@ void apMain(void) {
 
     if (current_tick - tick_1000 >= 1000) {
       tick_1000 = current_tick;
-      dht_status = dht11Read(&dht_data);
 
       ds1302GetDateTime(&rtc_time);
       printf("sec: %02d\r\n", rtc_time.sec);
@@ -83,12 +102,11 @@ void apMain(void) {
       /* 시리얼 터미널로 실시간 날짜와 시간 출력 */
     }
 
+    // float distance_cm;
     if (current_tick - tick_250 >= 250) {
       tick_250 = current_tick;
       adcUpdate();
       internal_temp = adcGetTemp();
-
-      // float distance_cm;
 
       // if (hcSr04Read(&distance_cm)) {
       //   printf("Distance: %.2f cm\r\n", distance_cm);
@@ -139,4 +157,71 @@ void apMain(void) {
 
     HAL_Delay(10);
   }
+}
+
+void StartDefaultTask(void *argument) {
+  apInit();
+
+  counterMutexHandle = osMutexNew(&counterMutex_attributes);
+  if (counterMutexHandle == NULL) {
+    Error_Handler();
+  }
+
+  while (1) {
+    if (task1_done && task2_done) {
+      printf("\r\n==================================\r\n");
+      printf("Expected Target : %lu\r\n", (long unsigned int)TARGET_COUNT);
+      printf("Actual Result   : %lu\r\n", g_shared_counter);
+      printf("Loss Count      : %lu\r\n", TARGET_COUNT - g_shared_counter);
+      printf("==================================\r\n");
+
+      osThreadExit();
+    }
+    osDelay(1000);
+  }
+}
+
+void StartTaskLED(void *argument) {
+  for (;;) {
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+    osDelay(500); // HAL_Delay 대신 반드시 osDelay 사용 (태스크 양보)
+  }
+}
+
+void StartTaskCLI(void *argument) { apMain(); }
+
+void StartTaskHCS04(void *argument) {
+  while (1) {
+    hcSr04Read(&distance_cm);
+    osDelay(1000);
+  }
+}
+
+void StartTaskDHT11(void *argument) {
+  while (1) {
+    dht11Read(&dht_data);
+    osDelay(1000);
+  }
+}
+
+/* Task 1: 50만 번 증가 */
+void StartTask01(void *argument) {
+  for (uint32_t i = 0; i < HALF_COUNT; i++) {
+    osMutexAcquire(counterMutexHandle, osWaitForever);
+    g_shared_counter++; // [비원자적 연산] Read -> Modify -> Write
+    osMutexRelease(counterMutexHandle);
+  }
+  task1_done = 1;
+  osThreadExit();
+}
+
+/* Task 2: 50만 번 증가 */
+void StartTask02(void *argument) {
+  for (uint32_t i = 0; i < HALF_COUNT; i++) {
+    osMutexAcquire(counterMutexHandle, osWaitForever);
+    g_shared_counter++; // [비원자적 연산] Read -> Modify -> Write
+    osMutexRelease(counterMutexHandle);
+  }
+  task2_done = 1;
+  osThreadExit();
 }
